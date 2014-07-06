@@ -52,3 +52,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# Virtualenv
+virtualenv/
+
+# Filtered out for security
+settings.py

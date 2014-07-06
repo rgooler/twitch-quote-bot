@@ -1,0 +1,12 @@
+# IRC settings
+HOST = "irc.twitch.tv"
+PORT = 6667
+USE_SSL = False
+USER = "sweetquotebot"
+# PASS = "4gJMYSW2yaBL"
+PASS = "oauth:***********************"
+
+CHANNEL = "#channel_name"
+CHANNELS = (
+    "#mikereverb1"
+)
