@@ -7,6 +7,3 @@ USER = "sweetquotebot"
 PASS = "oauth:***********************"
 
 CHANNEL = "#channel_name"
-CHANNELS = (
-    "#mikereverb1"
-)
