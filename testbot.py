@@ -23,6 +23,7 @@ The known commands are:
 import irc.bot
 import irc.strings
 import settings
+import sqlite3
 
 
 class TestBot(irc.bot.SingleServerIRCBot):
@@ -30,12 +31,17 @@ class TestBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, password)],
                                             nickname, nickname)
         self.channel = channel
-        self.quotefile = 'quotes/%s' % channel
+        self.db = sqlite3.connect('Quotes.db')
+        self.cursor = self.db.cursor()
 
     def on_welcome(self, c, e):
         c.join(self.channel)
+        sql = 'create table if not exists ' + self.channel + ' (id integer PRIMARY KEY, quote TEXT)'
+        self.db.execute(sql)
 
     def on_pubmsg(self, c, e):
+        print c.__dict__
+        print e.__dict__
         recv = e.arguments[0]
         if not recv.startswith('!'):
             return
@@ -47,9 +53,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
         # c = self.connection
 
         if cmd == "!addquote":
-            with open(self.quotefile, 'a') as fh:
-                fh.write(args)
-                fh.write("\n")
+            pass
         if cmd == "!random":
             # output random quote
             pass
