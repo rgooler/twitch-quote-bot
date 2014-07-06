@@ -23,7 +23,6 @@ The known commands are:
 import irc.bot
 import irc.strings
 import settings
-from irc.client import ip_quad_to_numstr
 
 
 class TestBot(irc.bot.SingleServerIRCBot):
@@ -31,48 +30,29 @@ class TestBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, password)],
                                             nickname, nickname)
         self.channel = channel
-        self.password = password
-
-    def on_nicknameinuse(self, c, e):
-        c.nick(c.get_nickname() + "_")
+        self.quotefile = 'quotes/%s' % channel
 
     def on_welcome(self, c, e):
         c.join(self.channel)
 
     def on_pubmsg(self, c, e):
-        if e.startswith('!'):
-            # do stuff
-            # self.do_command(e, a[1].strip())
+        recv = e.arguments[0]
+        if not recv.startswith('!'):
+            return
+        if recv.startswith('!addquote'):
+            self.do_command(e, '!addquote', recv[9:].strip())
+
+    def do_command(self, e, cmd, args=None):
+        # nick = e.source.nick
+        # c = self.connection
+
+        if cmd == "!addquote":
+            with open(self.quotefile, 'a') as fh:
+                fh.write(args)
+                fh.write("\n")
+        if cmd == "!random":
+            # output random quote
             pass
-
-    def do_command(self, e, cmd):
-        nick = e.source.nick
-        c = self.connection
-
-        if cmd == "disconnect":
-            self.disconnect()
-        elif cmd == "die":
-            self.die()
-        elif cmd == "stats":
-            for chname, chobj in self.channels.items():
-                c.notice(nick, "--- Channel statistics ---")
-                c.notice(nick, "Channel: " + chname)
-                users = chobj.users()
-                users.sort()
-                c.notice(nick, "Users: " + ", ".join(users))
-                opers = chobj.opers()
-                opers.sort()
-                c.notice(nick, "Opers: " + ", ".join(opers))
-                voiced = chobj.voiced()
-                voiced.sort()
-                c.notice(nick, "Voiced: " + ", ".join(voiced))
-        elif cmd == "dcc":
-            dcc = self.dcc_listen()
-            c.ctcp("DCC", nick, "CHAT chat %s %d" % (
-                ip_quad_to_numstr(dcc.localaddress),
-                dcc.localport))
-        else:
-            c.notice(nick, "Not understood: " + cmd)
 
 
 if __name__ == "__main__":
