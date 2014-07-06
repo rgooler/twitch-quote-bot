@@ -28,9 +28,10 @@ from irc.client import ip_quad_to_numstr
 
 class TestBot(irc.bot.SingleServerIRCBot):
     def __init__(self, channel, nickname, server, password, port=6667):
-        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname,
-                                            nickname)
+        irc.bot.SingleServerIRCBot.__init__(self, [(server, port, password)],
+                                            nickname, nickname)
         self.channel = channel
+        self.password = password
 
     def on_nicknameinuse(self, c, e):
         c.nick(c.get_nickname() + "_")
