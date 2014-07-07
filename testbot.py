@@ -73,10 +73,12 @@ class TestBot(irc.bot.SingleServerIRCBot):
             return
         print 'cmd_sayquote()'
         # output random quote
-        sql = 'SELECT quote FROM %s_quotes WHERE '
-        sql += 'id = (abs(random()) %% (SELECT MAX(id) FROM %s_quotes));'
-        sql = sql % (e.target[1:], e.target[1:])
+        sql = 'SELECT MAX(id) FROM %s_quotes' % e.target[1:]
         self.cursor.execute(sql)
+        m = self.cursor.fetchone()
+        sql = 'SELECT quote FROM %s_quotes WHERE id = abs(random() %% ?)'
+        sql = sql % e.target[1:]
+        self.cursor.execute(sql, m)
         try:
             (quote,) = self.cursor.fetchone()
             print quote
