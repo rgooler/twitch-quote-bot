@@ -86,17 +86,22 @@ class TestBot(irc.bot.SingleServerIRCBot):
     def check_perms(self, c, e, cmd):
         channel = e.target[:1]
         nick = e.source.nick
+        failmsg = 'Sorry, only regulars and mods can use that command.'
         if nick in self.channels[e.target].operdict:
             return True
         if cmd == '!addquote':
-            return self.user_is_regular(channel, nick)
+            if self.user_is_regular(channel, nick):
+                return True
+            else:
+                c.privmsg(e.target, failmsg)
+                return False
         else:
             return True
 
     def user_is_regular(self, channel, nick):
         sql = 'SELECT * FROM %s_regulars WHERE user=?' % channel
-        self.cursor.execute(sql, (nick.lower(), ))
         try:
+            self.cursor.execute(sql, (nick.lower(), ))
             if self.cursor.fetchone() is None:
                 return False
             return True
