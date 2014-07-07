@@ -31,33 +31,61 @@ class TestBot(irc.bot.SingleServerIRCBot):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port, password)],
                                             nickname, nickname)
         self.channel = channel
-        self.db = sqlite3.connect('Quotes.db')
+        self.db = sqlite3.connect('Bot.db')
         self.cursor = self.db.cursor()
 
     def on_welcome(self, c, e):
         c.join(self.channel)
-        sql = 'create table if not exists ' + self.channel + ' (id integer PRIMARY KEY, quote TEXT)'
-        self.db.execute(sql)
+
+    def on_join(self, c, e):
+        s = 'CREATE TABLE IF NOT EXISTS %s_quotes '
+        s += '(id INTEGER PRIMARY KEY AUTOINCREMENT, quote TEXT)'
+        self.cursor.execute(s % e.target[1:])
 
     def on_pubmsg(self, c, e):
-        print c.__dict__
-        print e.__dict__
+        self.cmd_sayquote(c, e)
+        return
         recv = e.arguments[0]
         if not recv.startswith('!'):
             return
         if recv.startswith('!addquote'):
-            self.do_command(e, '!addquote', recv[9:].strip())
+            self.cmd_addquote(e)
+            # if nick in self.channels[e.target].operdict:
+            #    self.cmd_addquote(e)
+            #    return
+            # else:
+            #     print 'not op'
+            #    self.do_command(e, '!addquote')
+            #    return
+        if recv.startswith('!quote'):
+            self.cmd_sayquote(e)
 
-    def do_command(self, e, cmd, args=None):
-        # nick = e.source.nick
-        # c = self.connection
+    def cmd_addquote(self, e):
+        print 'cmd_addquote()'
+        quote = e.arguments[0]
+        if quote is None:
+            return
+        # quote = str(e.arguments[0][len('!addquote'):].strip())
+        sql = "INSERT INTO %s_quotes (quote) VALUES (?);" % e.target[1:]
+        self.cursor.execute(sql, (quote,))
+        self.db.commit()
 
-        if cmd == "!addquote":
-            pass
-        if cmd == "!random":
-            # output random quote
-            pass
-
+    def cmd_sayquote(self, e, recursions=0):
+        if recursions >= 3:
+            return
+        print 'cmd_sayquote()'
+        # output random quote
+        sql = 'SELECT quote FROM %s_quotes WHERE '
+        sql += 'id = (abs(random()) %% (SELECT MAX(id) FROM %s_quotes));'
+        sql = sql % (e.target[1:], e.target[1:])
+        self.cursor.execute(sql)
+        try:
+            (quote,) = self.cursor.fetchone()
+            print quote
+            self.connection.privmesg(e.target, quote)
+        except:
+            # Sometimes, this returns a none. If so, try again
+            self.cmd_sayquote(e, recursions + 1)
 
 if __name__ == "__main__":
     s = settings

@@ -57,4 +57,4 @@ virtualenv/
 
 # Filtered out for security
 settings.py
-Quotes.db
+*.db
