@@ -29,7 +29,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
         if recv.startswith('!quote') and self.check_perms(c, e, cmd):
             self.cmd_quote(c, e)
         if recv.startswith('!reg') and self.check_perms(c, e, cmd):
-            self.cmd_quote(c, e)
+            self.cmd_reg(c, e)
 
     def cmd_addquote(self, c, e):
         quote = str(e.arguments[0][len('!addquote'):].strip())
