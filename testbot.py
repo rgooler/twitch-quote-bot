@@ -28,6 +28,8 @@ class TestBot(irc.bot.SingleServerIRCBot):
             self.cmd_addquote(c, e)
         if recv.startswith('!quote') and self.check_perms(c, e, cmd):
             self.cmd_quote(c, e)
+        if recv.startswith('!reg') and self.check_perms(c, e, cmd):
+            self.cmd_quote(c, e)
 
     def cmd_addquote(self, c, e):
         quote = str(e.arguments[0][len('!addquote'):].strip())
@@ -36,6 +38,23 @@ class TestBot(irc.bot.SingleServerIRCBot):
         sql = "INSERT INTO %s_quotes (quote) VALUES (?);" % e.target[1:]
         self.cursor.execute(sql, (quote,))
         self.db.commit()
+
+    def cmd_reg(self, c, e):
+        l = str(e.arguments[0][len('!reg'):].strip()).split(' ')
+        action = l[0].lower()
+        nick = l[1].lower()
+        if action is None or nick is None:
+            return
+        elif action == 'add':
+            sql = "INSERT INTO %s_regulars (user) VALUES (?);" % e.target[1:]
+            self.cursor.execute(sql, (nick,))
+            self.db.commit()
+            c.privmsg(e.target, 'Added %s to list of regulars' % nick)
+        elif action == 'del':
+            sql = "DELETE FROM %s_regulars WHERE user=?" % e.target[1:]
+            self.cursor.execute(sql, (nick,))
+            self.db.commit()
+            c.privmsg(e.target, 'Removed %s from list of regulars' % nick)
 
     def cmd_quote(self, c, e, recursions=0):
         if recursions >= 3:
@@ -76,7 +95,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
 
     def user_is_regular(self, channel, nick):
         sql = 'SELECT * FROM %s_regulars WHERE user=?' % channel
-        self.cursor.execute(sql, (nick, ))
+        self.cursor.execute(sql, (nick.lower(), ))
         try:
             if self.cursor.fetchone() is None:
                 return False
