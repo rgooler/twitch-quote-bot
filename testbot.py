@@ -43,13 +43,11 @@ class TestBot(irc.bot.SingleServerIRCBot):
         self.cursor.execute(s % e.target[1:])
 
     def on_pubmsg(self, c, e):
-        self.cmd_sayquote(c, e)
-        return
         recv = e.arguments[0]
         if not recv.startswith('!'):
             return
         if recv.startswith('!addquote'):
-            self.cmd_addquote(e)
+            self.cmd_addquote(c, e)
             # if nick in self.channels[e.target].operdict:
             #    self.cmd_addquote(e)
             #    return
@@ -58,9 +56,9 @@ class TestBot(irc.bot.SingleServerIRCBot):
             #    self.do_command(e, '!addquote')
             #    return
         if recv.startswith('!quote'):
-            self.cmd_sayquote(e)
+            self.cmd_sayquote(c, e)
 
-    def cmd_addquote(self, e):
+    def cmd_addquote(self, c, e):
         print 'cmd_addquote()'
         quote = e.arguments[0]
         if quote is None:
@@ -70,7 +68,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
         self.cursor.execute(sql, (quote,))
         self.db.commit()
 
-    def cmd_sayquote(self, e, recursions=0):
+    def cmd_sayquote(self, c, e, recursions=0):
         if recursions >= 3:
             return
         print 'cmd_sayquote()'
@@ -82,10 +80,10 @@ class TestBot(irc.bot.SingleServerIRCBot):
         try:
             (quote,) = self.cursor.fetchone()
             print quote
-            self.connection.privmesg(e.target, quote)
+            c.privmsg(e.target, quote)
         except:
             # Sometimes, this returns a none. If so, try again
-            self.cmd_sayquote(e, recursions + 1)
+            self.cmd_sayquote(c, e, recursions + 1)
 
 if __name__ == "__main__":
     s = settings
